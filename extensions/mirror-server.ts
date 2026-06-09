@@ -677,7 +677,8 @@ export default function (pi: ExtensionAPI) {
           const idx = levels.indexOf(current);
           const next = levels[(idx + 1) % levels.length];
           pi.setThinkingLevel(next as any);
-          sendTo(ws, success("cycle_thinking_level", { level: next }));
+          const actual = pi.getThinkingLevel();
+          sendTo(ws, success("cycle_thinking_level", { level: actual }));
           break;
         }
 
