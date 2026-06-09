@@ -170,6 +170,17 @@ function cleanupZombieInstances() {
   }
 }
 
+function isZombieProcess(pid: number): boolean {
+  if (process.platform === "win32") return false;
+  try {
+    const { execSync } = require("node:child_process");
+    const tty = execSync(`ps -o tty= -p ${pid}`, { encoding: "utf8" }).trim();
+    return !tty || tty === "??" || tty === "-";
+  } catch {
+    return true;
+  }
+}
+
 // MIME types for static file serving
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
@@ -1626,7 +1637,7 @@ img{border-radius:12px}a{color:#b87a5c;font-size:18px;margin-top:16px}p{color:rg
           // Check if a stale Tau instance owns this port and kill it
           const instances = getRunningInstances();
           const stale = instances.find(i => i.port === port && i.pid !== process.pid);
-          if (stale) {
+          if (stale && isZombieProcess(stale.pid)) {
             console.log(`[Mirror] Port ${port} in use by stale Tau instance (PID ${stale.pid}), killing...`);
             try { process.kill(stale.pid, "SIGTERM"); } catch {}
             // Wait briefly then retry the same port
